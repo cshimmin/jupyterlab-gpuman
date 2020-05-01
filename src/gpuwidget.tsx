@@ -1,6 +1,7 @@
 import {
   ReactWidget,
-  ToolbarButtonComponent
+  ToolbarButtonComponent,
+  UseSignal
 } from '@jupyterlab/apputils';
 
 import {
@@ -23,6 +24,10 @@ import {
   toArray
 } from '@lumino/algorithm';
 
+import {
+  GPUKernelManager, APIKernel
+} from './jupyterlab-gpuman';
+
 import * as React from 'react';
 
 const RUNNING_CLASS = 'jp-RunningSessions';
@@ -33,9 +38,9 @@ const ITEM_LABEL_CLASS = 'jp-RunningSessions-itemLabel';
 const SHUTDOWN_BUTTON_CLASS = 'jp-RunningSessions-itemShutdown';
 
 function SessionComponent(props: {
-  session: RunningSession
+  session: Session.IModel
 }) {
-  const { session } = props;
+  const session = new RunningSession(props.session);
   const icon = session.icon();
 
   return (
@@ -53,27 +58,67 @@ function SessionComponent(props: {
   );
 }
 
-function RunningSessionsComponent(props: {
-  manager: SessionManager,
+function SessList(props: {
+  runningSessions: Session.IModel[],
+  gpuKernels: Map<string, APIKernel> 
+  gpu: number
 }) {
-  //{toArray(props.manager.running()).map(item => new RunningSession(item)).map((item, i) => (
-  //<{item.icon()}.react tag="span" stylesheet="runningItem" />
-  const { manager } = props;
-  const sessions = toArray(manager.running()).map(item => new RunningSession(item));
+  const { runningSessions, gpuKernels, gpu } = props;
+  return (
+    <>
+    <ul className={LIST_CLASS}>
+    {runningSessions.filter(sess => (gpuKernels.has(sess.kernel.id) && gpuKernels.get(sess.kernel.id).gpu === gpu)).map((sess, i) => (
+      <SessionComponent key={100*i+gpu} session={sess} />
+    ))}
+    </ul>
+    </>
+  );
+}
+
+function LoopGPU(props: {
+  smanager: SessionManager,
+  kmanager: GPUKernelManager
+}) {
+  const { smanager, kmanager } = props;
+  const gpulist = [0, 1, 2, 3, 4];
+  return (
+    <>
+    {gpulist.map(igpu => (
+      <>
+      <b>GPU {igpu}</b>
+      <SessList runningSessions={toArray(smanager.running())} gpuKernels={kmanager.kernels()} gpu={igpu} />
+      </>
+    ))}
+    </>
+  );
+}
+
+function RunningSessionsComponent(props: {
+  smanager: SessionManager,
+  kmanager: GPUKernelManager
+}) {
+  const { smanager, kmanager } = props;
   return (
     <>
     <div className={HEADER_CLASS}>
     <ToolbarButtonComponent 
       tooltip="Refresh"
       icon={refreshIcon}
-      onClick={() => props.manager.refreshRunning()}
+      onClick={() => {
+        smanager.refreshRunning();
+        kmanager.refresh();
+      }}
     />
     </div>
-    <ul className={LIST_CLASS}>
-    {sessions.map((sess, i) => (
-      <SessionComponent key={i} session={sess} />
-    ))}
-    </ul>
+    <UseSignal signal={smanager.runningChanged}>
+    {() =>
+    <UseSignal signal={kmanager.kernelsChanged}>
+    {() =>
+      <LoopGPU smanager={smanager} kmanager={kmanager} />
+    }
+    </UseSignal>
+    }
+    </UseSignal>
     </>
   );
 }
@@ -102,15 +147,17 @@ class RunningSession {
 }
 
 export class GPUWidget extends ReactWidget {
-  constructor(sessions: SessionManager) {
+  constructor(sessions: SessionManager, kernels: GPUKernelManager) {
     super();
-    this._manager = sessions;
+    this._smanager = sessions;
+    this._kmanager = kernels;
     this.addClass(RUNNING_CLASS);
   }
 
   render() {
-    return <RunningSessionsComponent manager={this._manager} />;
+    return <RunningSessionsComponent smanager={this._smanager} kmanager={this._kmanager}/>;
   }
 
-  private _manager: SessionManager;
+  private _smanager: SessionManager;
+  private _kmanager: GPUKernelManager;
 }

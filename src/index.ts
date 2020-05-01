@@ -21,17 +21,15 @@ import {
   kernelIcon
 } from '@jupyterlab/ui-components';
 
-import {
-  toArray
-} from '@lumino/algorithm';
-
 import { GPUWidget } from './gpuwidget';
+import { requestAPI, APIResult, GPUKernelManager } from './jupyterlab-gpuman';
 
 function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher, restorer: ILayoutRestorer) {
   console.log('JupyterLab extension jupyterlab-gpuman is activated!');
 
   let widget: GPUWidget;
   let mainArea: MainAreaWidget<GPUWidget>;
+  let gman: GPUKernelManager;
 
   let tracker = new WidgetTracker<MainAreaWidget<GPUWidget>>({
     namespace: 'gpuman'
@@ -42,10 +40,14 @@ function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher
   app.commands.addCommand(command, {
     label: 'GPU Manager',
     caption: 'Open the GPU Manager',
-    icon: args => (args['isPalette'] ? '' : kernelIcon),
+    //icon: args => (args['isPalette'] ? '' : kernelIcon),
+    icon: kernelIcon,
     execute: () => {
+      if (!gman) {
+        gman = new GPUKernelManager();
+      }
       if (!widget) {
-        widget = new GPUWidget(app.serviceManager.sessions);
+        widget = new GPUWidget(app.serviceManager.sessions, gman);
       }
       if (!mainArea || mainArea.isDisposed) {
         mainArea = new MainAreaWidget({content: widget});
@@ -66,16 +68,9 @@ function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher
 
       app.shell.activateById(mainArea.id);
 
-      let running = toArray(app.serviceManager.sessions.running());
-      console.log('running:', running);
-      let isess = -1;
-      for (let sess of running) {
-        if (sess == undefined) {
-          break;
-        }
-        isess = isess + 1;
-        console.log('sess ' + isess + ':', sess);
-      }
+      requestAPI<APIResult>('get').then(data => {
+        console.log('got data (eventually):', data.gpu_kernels);
+      });
     }
   });
 
