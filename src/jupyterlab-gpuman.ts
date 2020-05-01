@@ -1,5 +1,7 @@
 import { URLExt } from '@jupyterlab/coreutils';
 
+import { Session } from '@jupyterlab/services';
+
 import { ServerConnection } from '@jupyterlab/services';
 
 import {
@@ -11,18 +13,26 @@ import {
   Poll
 } from '@lumino/polling';
 
-export class GPUKernelManager {
+function eqSet(a: Set<any>, b: Set<any>): boolean {
+  if (a.size !== b.size) return false;
+  for (let v of a) {
+    if (!b.has(v)) return false;
+  }
+  return true;
+}
+
+export class GPUManager {
   constructor() {
     this._pollGPUs = new Poll({
       auto: false,
       factory: () => this.requestKernels(),
       frequency: {
-        interval: 10 * 1000,
-        backoff: true,
-        max: 300 * 1000
+        interval: 5 * 1000,
+        backoff: false,
+        //max: 300 * 1000
       },
-      name: 'jupyterlab-gpuman/services:GPUKernelManager',
-      standby: 'when-hidden'
+      name: 'jupyterlab-gpuman/services:GPUManager',
+      //standby: 'when-hidden'
     });
 
     this._ready = (async () => {
@@ -41,19 +51,58 @@ export class GPUKernelManager {
   }
 
   protected async requestKernels(): Promise<void> {
-    let kinfo = await requestAPI<APIResult>('get');
+    let gpus: GPUInfo[];
 
-    let newkernels = new Map<string, APIKernel>();
-    for (let k of kinfo.gpu_kernels) {
-      newkernels.set(k.kernel, k);
+    gpus = await requestAPI('get');
+
+    this._gpus = gpus;
+
+    let gpuKernels = new Set<string>();
+
+    for (let g of gpus) {
+      for (let k of g.kernels) {
+        gpuKernels.add(k.id + k.gpu + k.used_memory);
+      }
     }
 
-    this._kernels = newkernels;
-    this._kernelsChanged.emit(newkernels);
+    if (!eqSet(this._knownKernels, gpuKernels)) {
+      this._knownKernels = gpuKernels;
+      this._kernelsChanged.emit();
+    }
+
+    this._updateReceived.emit();
   }
 
-  kernels(): Map<string, APIKernel> {
-    return this._kernels;
+  sessions(gpu: number): Session.IModel[] {
+    let arr: Session.IModel[] = [];
+    for (let k of this._gpus[gpu].kernels) {
+      arr = arr.concat(k.sessions);
+    }
+    return arr;
+  }
+
+  kernels(gpu: number): GPUKernel[] {
+    return this._gpus[gpu].kernels;
+  }
+
+  kernels_flat(): GPUKernel[] {
+    let arr: GPUKernel[];
+    for (let g of this._gpus) {
+      arr = arr.concat(g.kernels);
+    }
+    return arr;
+  }
+
+  stats(gpu: number): GPUStats {
+    return this._gpus[gpu].stats;
+  }
+
+  stats_all(): GPUStats[] {
+    return this._gpus.map(gpu => gpu.stats);
+  }
+
+  nGPUs(): number {
+    return this._gpus.length;
   }
 
   async refresh(): Promise<void> {
@@ -61,25 +110,46 @@ export class GPUKernelManager {
     await this._pollGPUs.tick;
   }
 
-  get kernelsChanged(): ISignal<this, Map<string, APIKernel>> {
+  get kernelsChanged(): ISignal<this, void> {
     return this._kernelsChanged;
   }
 
-  private _kernels = new Map<string, APIKernel>();
+  get updateReceived(): ISignal<this, void> {
+    return this._updateReceived;
+  }
+
+  //private _gpus: GPUInfo[] = [];
+  private _gpus = new Array<GPUInfo>();
   private _pollGPUs: Poll;
-  private _kernelsChanged = new Signal<this, Map<string, APIKernel>>(this);
+  private _knownKernels = new Set<string>();
+  private _kernelsChanged = new Signal<this, void>(this);
+  private _updateReceived = new Signal<this, void>(this);
   private _isReady = false;
   private _ready: Promise<void>;
 }
 
-export interface APIKernel {
-  kernel: string;
+export interface GPUKernel {
+  id: string;
   uid: number;
   gpu: number;
+  used_memory: number;
+  sessions: Session.IModel;
 }
 
-export interface APIResult {
-  gpu_kernels: APIKernel[];
+export interface GPUStats {
+  name: string;
+  brand: string;
+  gpu_util: number;
+  mem_total: number;
+  mem_free: number;
+  mem_used: number;
+  mem_unit: string;
+  mem_util: number;
+}
+
+export interface GPUInfo {
+  kernels: GPUKernel[];
+  stats: GPUStats;
 }
 
 /**

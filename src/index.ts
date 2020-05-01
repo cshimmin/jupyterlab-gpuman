@@ -22,14 +22,15 @@ import {
 } from '@jupyterlab/ui-components';
 
 import { GPUWidget } from './gpuwidget';
-import { requestAPI, APIResult, GPUKernelManager } from './jupyterlab-gpuman';
+//import { GPUKernelManager } from './jupyterlab-gpuman';
+import { GPUManager } from './jupyterlab-gpuman';
 
 function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher, restorer: ILayoutRestorer) {
   console.log('JupyterLab extension jupyterlab-gpuman is activated!');
 
   let widget: GPUWidget;
   let mainArea: MainAreaWidget<GPUWidget>;
-  let gman: GPUKernelManager;
+  let gman: GPUManager;
 
   let tracker = new WidgetTracker<MainAreaWidget<GPUWidget>>({
     namespace: 'gpuman'
@@ -44,10 +45,10 @@ function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher
     icon: kernelIcon,
     execute: () => {
       if (!gman) {
-        gman = new GPUKernelManager();
+        gman = new GPUManager();
       }
       if (!widget) {
-        widget = new GPUWidget(app.serviceManager.sessions, gman);
+        widget = new GPUWidget(app, gman);
       }
       if (!mainArea || mainArea.isDisposed) {
         mainArea = new MainAreaWidget({content: widget});
@@ -68,9 +69,6 @@ function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher
 
       app.shell.activateById(mainArea.id);
 
-      requestAPI<APIResult>('get').then(data => {
-        console.log('got data (eventually):', data.gpu_kernels);
-      });
     }
   });
 
