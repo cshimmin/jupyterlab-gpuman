@@ -12,28 +12,15 @@ import {
   UseSignal
 } from '@jupyterlab/apputils';
 
-import {
-  JupyterFrontEnd
-} from '@jupyterlab/application';
+import { JupyterFrontEnd } from '@jupyterlab/application';
 
-import {
-  Session,
-  SessionManager
-} from '@jupyterlab/services';
+import { Session, SessionManager } from '@jupyterlab/services';
 
-import {
-  PathExt
-} from '@jupyterlab/coreutils';
+import { PathExt } from '@jupyterlab/coreutils';
 
-import {
-  GPUManager,
-  GPUStats
-} from './jupyterlab-gpuman';
+import { GPUManager, IGPUStats } from './jupyterlab-gpuman';
 
-import {
-  Signal,
-  ISignal
-} from '@lumino/signaling';
+import { Signal, ISignal } from '@lumino/signaling';
 
 import * as React from 'react';
 
@@ -44,66 +31,54 @@ const ITEM_CLASS = 'jp-RunningSessions-item';
 const ITEM_LABEL_CLASS = 'jp-RunningSessions-itemLabel';
 const SHUTDOWN_BUTTON_CLASS = 'jp-RunningSessions-itemShutdown';
 
-function GPUSession(props: {
-  session: IGPUSession
-}) {
+function GPUSession(props: { session: IGPUSession }) {
   const { session } = props;
-  let icon = session.icon();
+  const icon = session.icon();
   return (
     <li className={ITEM_CLASS}>
-    <icon.react stylesheet="runningItem" />
-    <span
-      className={ITEM_LABEL_CLASS}
-      onClick={() => session.open()}
-    >
-    { session.path() }
-    </span>
-    <button
-      className={`${SHUTDOWN_BUTTON_CLASS} jp-mod-styled`}
-      onClick={() => session.shutdown()}
-    >
-    SHUT&nbsp;DOWN
-    </button>
+      <icon.react stylesheet="runningItem" />
+      <span className={ITEM_LABEL_CLASS} onClick={() => session.open()}>
+        {session.path()}
+      </span>
+      <button
+        className={`${SHUTDOWN_BUTTON_CLASS} jp-mod-styled`}
+        onClick={() => session.shutdown()}
+      >
+        SHUT&nbsp;DOWN
+      </button>
     </li>
   );
 }
 
-function GPUSessions(props: {
-  gpu: number,
-  gpuManager: IGPUManager
-}) {
-
+function GPUSessions(props: { gpu: number; gpuManager: IGPUManager }) {
   const { gpu, gpuManager } = props;
-  let stats = gpuManager.stats(gpu);
-  let sessions = gpuManager.sessions(gpu);
+  const stats = gpuManager.stats(gpu);
+  const sessions = gpuManager.sessions(gpu);
   if (sessions.length === 0) {
-    return (
-      <>
-      </>
-    );
+    return <></>;
   }
   return (
     <>
-    <b>Sessions running on GPU {gpu} [{stats.name}]:</b>
-    <ul className={LIST_CLASS}>
-    {sessions.map((sess, i) => (
-      <GPUSession key={i} session={sess} />
-    ))}
-    </ul>
+      <b>
+        Sessions running on GPU {gpu} [{stats.name}]:
+      </b>
+      <ul className={LIST_CLASS}>
+        {sessions.map((sess, i) => (
+          <GPUSession key={i} session={sess} />
+        ))}
+      </ul>
     </>
   );
 }
 
-function GPUSessionsList(props: {
-  gpuManager: IGPUManager
-}) {
+function GPUSessionsList(props: { gpuManager: IGPUManager }) {
   const { gpuManager } = props;
-  let arr = [...Array(gpuManager.nGPUs()).keys()];
+  const arr = [...Array(gpuManager.nGPUs()).keys()];
   return (
     <>
-    {arr.map(i => (
-      <GPUSessions key={i} gpu={i} gpuManager={gpuManager} />
-    ))}
+      {arr.map(i => (
+        <GPUSessions key={i} gpu={i} gpuManager={gpuManager} />
+      ))}
     </>
   );
 }
@@ -115,42 +90,42 @@ export interface IGPUSession {
   path: () => string;
 }
 
-interface IGPUManager  {
+interface IGPUManager {
   refresh: () => void;
   nGPUs: () => number;
-  stats: (gpu: number) => GPUStats;
-  stats_all: () => GPUStats[];
+  stats: (gpu: number) => IGPUStats;
+  statsAll: () => IGPUStats[];
   sessions: (gpu: number) => IGPUSession[];
   //kernelsChanged: ISignal<any, any>;
 }
 
-function GPUStatPanel(props: {
-  gpu: number,
-  stats: GPUStats
-}) {
+function GPUStatPanel(props: { gpu: number; stats: IGPUStats }) {
   const { gpu, stats } = props;
   return (
     <div>
-    <h3>GPU {gpu} [{stats.name}]</h3>
-    <br />
-    <span>Memory: {stats.mem_used.toFixed()} / {stats.mem_total.toFixed()} {stats.mem_unit}</span>
-    <br />
-    <span>GPU Utilization: {stats.gpu_util}%</span>
-    <br />
-    <br />
+      <h3>
+        GPU {gpu} [{stats.name}]
+      </h3>
+      <br />
+      <span>
+        Memory: {stats.mem_used.toFixed()} / {stats.mem_total.toFixed()}{' '}
+        {stats.mem_unit}
+      </span>
+      <br />
+      <span>GPU Utilization: {stats.gpu_util}%</span>
+      <br />
+      <br />
     </div>
   );
 }
 
-function GPUStatsPanel(props: {
-  gpuManager: IGPUManager
-}) {
+function GPUStatsPanel(props: { gpuManager: IGPUManager }) {
   const { gpuManager } = props;
   return (
     <>
-    {gpuManager.stats_all().map((stats, i) => (
-      <GPUStatPanel key={i} gpu={i} stats={stats} />
-    ))}
+      {gpuManager.statsAll().map((stats, i) => (
+        <GPUStatPanel key={i} gpu={i} stats={stats} />
+      ))}
     </>
   );
 }
@@ -199,10 +174,12 @@ export class GPUWidget extends ReactWidget {
       refresh: () => gpuManager.refresh(),
       nGPUs: () => gpuManager.nGPUs(),
       stats: (gpu: number) => gpuManager.stats(gpu),
-      stats_all: () => gpuManager.stats_all(),
+      statsAll: () => gpuManager.statsAll(),
       //kernelsChanged: gpuManager.kernelsChanged,
       sessions: (gpu: number) => {
-        let sessies = gpuManager.sessions(gpu).map(sess => new RunningSession(sess));
+        const sessies = gpuManager
+          .sessions(gpu)
+          .map(sess => new RunningSession(sess));
         return sessies;
       }
     };
@@ -229,26 +206,22 @@ export class GPUWidget extends ReactWidget {
   render() {
     return (
       <>
-      <div className={HEADER_CLASS}>
-      <ToolbarButtonComponent
-      tooltip="Refresh"
-      icon={refreshIcon}
-      onClick={() => {
-        this._sessionManager.refreshRunning();
-        this._gpuManager.refresh();
-      }}
-      />
-      </div>
-      <UseSignal signal={this._updateReceived}>
-      {() =>
-        <GPUStatsPanel gpuManager={this._gpuManager} />
-      }
-      </UseSignal>
-      <UseSignal signal={this._somethingChanged}>
-      {() =>
-        <GPUSessionsList gpuManager={this._gpuManager} />
-      }
-      </UseSignal>
+        <div className={HEADER_CLASS}>
+          <ToolbarButtonComponent
+            tooltip="Refresh"
+            icon={refreshIcon}
+            onClick={() => {
+              this._sessionManager.refreshRunning();
+              this._gpuManager.refresh();
+            }}
+          />
+        </div>
+        <UseSignal signal={this._updateReceived}>
+          {() => <GPUStatsPanel gpuManager={this._gpuManager} />}
+        </UseSignal>
+        <UseSignal signal={this._somethingChanged}>
+          {() => <GPUSessionsList gpuManager={this._gpuManager} />}
+        </UseSignal>
       </>
     );
   }

@@ -4,39 +4,35 @@ import {
   ILayoutRestorer
 } from '@jupyterlab/application';
 
-import {
-  MainAreaWidget,
-  WidgetTracker
-} from '@jupyterlab/apputils';
+import { MainAreaWidget, WidgetTracker } from '@jupyterlab/apputils';
 
-import {
-  IMainMenu
-} from '@jupyterlab/mainmenu';
+import { IMainMenu } from '@jupyterlab/mainmenu';
 
-import {
-  ILauncher
-} from '@jupyterlab/launcher';
+import { ILauncher } from '@jupyterlab/launcher';
 
-import {
-  kernelIcon
-} from '@jupyterlab/ui-components';
+import { kernelIcon } from '@jupyterlab/ui-components';
 
 import { GPUWidget } from './gpuwidget';
 //import { GPUKernelManager } from './jupyterlab-gpuman';
 import { GPUManager } from './jupyterlab-gpuman';
 
-function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher, restorer: ILayoutRestorer) {
+function activate(
+  app: JupyterFrontEnd,
+  mainMenu: IMainMenu,
+  launcher: ILauncher,
+  restorer: ILayoutRestorer
+) {
   console.log('JupyterLab extension jupyterlab-gpuman is activated!');
 
   let widget: GPUWidget;
   let mainArea: MainAreaWidget<GPUWidget>;
   let gman: GPUManager;
 
-  let tracker = new WidgetTracker<MainAreaWidget<GPUWidget>>({
+  const tracker = new WidgetTracker<MainAreaWidget<GPUWidget>>({
     namespace: 'gpuman'
   });
 
-  const command: string = 'gpuman:open';
+  const command = 'gpuman:open';
 
   app.commands.addCommand(command, {
     label: 'GPU Manager',
@@ -51,7 +47,7 @@ function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher
         widget = new GPUWidget(app, gman);
       }
       if (!mainArea || mainArea.isDisposed) {
-        mainArea = new MainAreaWidget({content: widget});
+        mainArea = new MainAreaWidget({ content: widget });
         mainArea.id = 'jupyterlab-gpuman';
         mainArea.title.label = 'GPU Manager';
         mainArea.title.closable = true;
@@ -68,11 +64,10 @@ function activate(app: JupyterFrontEnd, mainMenu: IMainMenu, launcher: ILauncher
       mainArea.content.update();
 
       app.shell.activateById(mainArea.id);
-
     }
   });
 
-  mainMenu.fileMenu.newMenu.addGroup([{command: command}]);
+  mainMenu.fileMenu.newMenu.addGroup([{ command: command }]);
 
   launcher.add({
     command: command,
