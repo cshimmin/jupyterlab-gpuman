@@ -99,22 +99,42 @@ interface IGPUManager {
   //kernelsChanged: ISignal<any, any>;
 }
 
+function PercentageIndicator(props: {
+  val: number,
+}) {
+  const { val } = props;
+  const innerStyle = {
+    width: val + '%'
+  };
+  const outerStyle = {
+    padding: '5px',
+  };
+  return (
+    <div style={outerStyle}>
+    <div className='pctind'>
+      <div className='pctind-left' style={innerStyle}></div>
+    </div>
+    </div>
+  );
+}
+
 function GPUStatPanel(props: { gpu: number; stats: IGPUStats }) {
   const { gpu, stats } = props;
   return (
-    <div>
-      <h3>
-        GPU {gpu} [{stats.name}]
-      </h3>
+    <div className='gpuStatPanel'>
+      <span className='gpuStatPanel-title'>GPU {gpu} [{stats.name}]</span>
       <br />
-      <span>
-        Memory: {stats.mem_used.toFixed()} / {stats.mem_total.toFixed()}{' '}
-        {stats.mem_unit}
-      </span>
-      <br />
-      <span>GPU Utilization: {stats.gpu_util}%</span>
-      <br />
-      <br />
+      <div className='gpuStatPanel-indicators'>
+        <div className='gpuStatPanel-memoryIndicator'>
+        <PercentageIndicator val={stats.mem_used / stats.mem_total * 100} />
+        <div className='gpuStatPanel-detail'>{stats.mem_used.toFixed()} / {stats.mem_total.toFixed()} {stats.mem_unit} </div>
+        </div>
+        <div className='gpuStatPanel-gpuIndicator'>
+        <PercentageIndicator val={stats.gpu_util} />
+        <div className='gpuStatPanel-detail'>{stats.gpu_util}%</div>
+        </div>
+        <div></div>
+      </div>
     </div>
   );
 }
@@ -219,9 +239,12 @@ export class GPUWidget extends ReactWidget {
         <UseSignal signal={this._updateReceived}>
           {() => <GPUStatsPanel gpuManager={this._gpuManager} />}
         </UseSignal>
+        <br />
+        <div className='gpuSessionsPanel'>
         <UseSignal signal={this._somethingChanged}>
           {() => <GPUSessionsList gpuManager={this._gpuManager} />}
         </UseSignal>
+        </div>
       </>
     );
   }

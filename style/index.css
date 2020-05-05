@@ -1,0 +1,66 @@
+.gpuStatPanel {
+  padding: 8px;
+}
+
+.gpuStatPanel-title {
+  font-weight: bold;
+}
+
+.pctind {
+  height: 25px;
+  padding: 4px;
+  background: #eeeeee;
+}
+
+.pctind-left {
+  height: 25px;
+  background: #bdbdbd;
+}
+
+.gpuStatPanel-indicators {
+}
+
+.gpuStatPanel-indicators:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.gpuStatPanel-detail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 25px;
+  padding-left: 9px;
+  padding-right: 9px;
+  padding-top: 12px;
+  padding-bottom: 6px;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: bold;
+}
+
+.gpuStatPanel-memoryIndicator {
+  position: relative;
+  width: 50%;
+  float: left;
+}
+
+.gpuStatPanel-memoryIndicator .pctind {
+  background: #ffe9c9;
+}
+
+.gpuStatPanel-memoryIndicator .pctind-left {
+  background: #f5aa42;
+}
+
+.gpuStatPanel-gpuIndicator {
+  position: relative;
+  width: 50%;
+  float: left;
+}
+
+.gpuSessionsPanel {
+  padding: 8px;
+}
