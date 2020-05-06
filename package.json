@@ -1,6 +1,6 @@
 {
   "name": "jupyterlab-gpuman",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "GPU manager for jupyterlab notebooks",
   "keywords": [
     "jupyter",
