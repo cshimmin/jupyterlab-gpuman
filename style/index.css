@@ -1,66 +1,174 @@
-.gpuStatPanel {
+:root {
+  --jp-private-GPUStats-indicator-height: 26px;;
+  --jp-private-GPUSessions-item-height: 24px;
+}
+
+.jp-GPUSessions-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.jp-GPUSessions-gpuLabel {
+  font-weight: 600;
+  letter-spacing: 1px;
+  font-size: var(--jp-ui-font-size0);
   padding: 8px;
+  margin: 0px;
+  border-bottom: var(--jp-border-width) solid var(--jp-border-color2);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.jp-GPUSessions-sessionList {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.jp-GPUSessions-item {
+  display: flex;
+  flex-direction: row;
+  color: var(--jp-ui-font-color1);
+  height: var(--jp-private-GPUSessions-item-height);
+  line-height: var(--jp-private-GPUSessions-item-height);
+}
+
+.jp-GPUSessions-sessionPanel {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: row;
+  padding-left: 4px;
+  border-radius: 2px;
+  transition: background-color 0.1s ease;
+}
+
+.jp-GPUSessions-sessionPanel:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.jp-GPUSessions-sessionPanel:focus {
+  background-color: rgba(153, 153, 153, 0.2);
+}
+
+
+.jp-GPUSessions-sessionLabel {
+  font-size: var(--jp-ui-font-size1);
+  flex: 1 1 auto;
+  text-overflow: ellipsis;
+  margin-right: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.jp-GPUSessions-sessionMemory {
+  flex: 0 0 150px;
+  padding: 6px;
+  display: flex;
+  font-size: var(--jp-ui-font-size1);
+}
+
+.jp-GPUSessions-percentIndicator {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.jp-GPUSessions-percentIndicator-container {
+  flex: 1 1 auto;
+  height: 100%;
+  border: 1px solid var(--jp-layout-color3);
+  border-radius: 6px;
+}
+
+.jp-GPUSessions-percentIndicator-bar {
+  height: 100%;
+  background-color: var(--jp-layout-color3);
+}
+
+.jp-GPUSessions-percentIndicator-label {
+  position: absolute;
+  font-weight: bold;
+}
+
+.spanLabelThing {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 50%;
+  padding-right: 10px;
+  padding-left: 4px;
+}
+
+.gpuStatPanel {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  border: var(--jp-border-width) solid var(--jp-border-color1);
 }
 
 .gpuStatPanel-title {
-  font-weight: bold;
-}
-
-.pctind {
-  height: 25px;
-  padding: 4px;
-  background: #eeeeee;
-}
-
-.pctind-left {
-  height: 25px;
-  background: #bdbdbd;
+  font-weight: 600;
+  font-size: var(--jp-ui-font-size1);
+  letter-spacing: 1px;
+  color: var(--jp-ui-font-color1);
 }
 
 .gpuStatPanel-indicators {
+  display: flex;
+  flex-direction: row;
 }
 
-.gpuStatPanel-indicators:after {
-  content: "";
-  display: table;
-  clear: both;
+.gpuStatPanel-indicatorWidget {
+  padding: 4px;
 }
 
-.gpuStatPanel-detail {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 25px;
-  padding-left: 9px;
-  padding-right: 9px;
-  padding-top: 12px;
-  padding-bottom: 6px;
-  text-align: center;
-  vertical-align: middle;
-  font-weight: bold;
+.gpuStatPanel-indicatorTitle {
+  font-size: var(--jp-ui-font-size0);
+  font-weight: 600;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gpuStatPanel-indicator {
+  display: flex;
+  height: var(--jp-private-GPUStats-indicator-height);
+  font-size: var(--jp-ui-font-size1);
+  margin-top: 4px;
 }
 
 .gpuStatPanel-memoryIndicator {
-  position: relative;
-  width: 50%;
-  float: left;
+  flex: 2 2 auto;
 }
 
-.gpuStatPanel-memoryIndicator .pctind {
-  background: #ffe9c9;
+.gpuStatPanel-memoryIndicator .jp-GPUSessions-percentIndicator-container {
+  border-color: var(--jp-warn-color2);
 }
 
-.gpuStatPanel-memoryIndicator .pctind-left {
-  background: #f5aa42;
+.gpuStatPanel-memoryIndicator .jp-GPUSessions-percentIndicator-bar {
+  background-color: var(--jp-warn-color2);
 }
 
 .gpuStatPanel-gpuIndicator {
-  position: relative;
-  width: 50%;
-  float: left;
+  flex: 1 1 auto;
+}
+
+.gpuStatPanel-gpuIndicator .jp-GPUSessions-percentIndicator-container {
+  border-color: var(--jp-brand-color2);
+}
+
+.gpuStatPanel-gpuIndicator .jp-GPUSessions-percentIndicator-bar {
+  background-color: var(--jp-brand-color2);
+}
+
+.gpuStatPanel-bwIndicator {
+  flex: 1 1 auto;
 }
 
 .gpuSessionsPanel {
-  padding: 8px;
+  padding: 10px;
 }

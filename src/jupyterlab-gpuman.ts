@@ -4,6 +4,8 @@ import { Session } from '@jupyterlab/services';
 
 import { ServerConnection } from '@jupyterlab/services';
 
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+
 import { Signal, ISignal } from '@lumino/signaling';
 
 import { Poll } from '@lumino/polling';
@@ -20,13 +22,25 @@ function eqSet(a: Set<any>, b: Set<any>): boolean {
   return true;
 }
 
+interface IConfig {
+  hiddenGPUs: Array<number>;
+  pollingInterval: number;
+}
+
+const defaultConfig: IConfig = {
+  hiddenGPUs: [],
+  pollingInterval: 5000
+};
+
 export class GPUManager {
   constructor() {
+    this._config = { ...defaultConfig };
+
     this._pollGPUs = new Poll({
       auto: false,
       factory: () => this.requestKernels(),
       frequency: {
-        interval: 5 * 1000,
+        interval: this._config.pollingInterval,
         backoff: false
         //max: 300 * 1000
       },
@@ -52,7 +66,11 @@ export class GPUManager {
   protected async requestKernels(): Promise<void> {
     const gpus = (await requestAPI('get')) as IGPUInfo[];
 
-    this._gpus = gpus;
+    // filter out hidden GPUs
+    this._gpusAll = gpus;
+    this._gpus = gpus.filter((g, i) => {
+      return this._config.hiddenGPUs.indexOf(i) === -1;
+    });
 
     const gpuKernels = new Set<string>();
 
@@ -70,10 +88,13 @@ export class GPUManager {
     this._updateReceived.emit();
   }
 
-  sessions(gpu: number): Session.IModel[] {
-    let arr: Session.IModel[] = [];
+  sessions(gpu: number): IGPUSession[] {
+    let arr: IGPUSession[] = [];
     for (const k of this._gpus[gpu].kernels) {
-      arr = arr.concat(k.sessions);
+      const s = this._gpusAll[k.gpu].stats;
+      arr = arr.concat(
+        k.sessions.map(sess => ({ ...sess, gpuKernel: k, gpuStats: s }))
+      );
     }
     return arr;
   }
@@ -115,6 +136,17 @@ export class GPUManager {
     return this._updateReceived;
   }
 
+  updateSettings(settings: ISettingRegistry.ISettings): void {
+    this._config = { ...defaultConfig, ...settings.composite };
+    this._pollGPUs.frequency = {
+      ...this._pollGPUs.frequency,
+      interval: this._config.pollingInterval
+    };
+    this._updateReceived.emit();
+  }
+
+  private _config: IConfig;
+  private _gpusAll = new Array<IGPUInfo>();
   private _gpus = new Array<IGPUInfo>();
   private _pollGPUs: Poll;
   private _knownKernels = new Set<string>();
@@ -124,12 +156,17 @@ export class GPUManager {
   private _ready: Promise<void>;
 }
 
+export interface IGPUSession extends Session.IModel {
+  gpuKernel: IGPUKernel;
+  gpuStats: IGPUStats;
+}
+
 export interface IGPUKernel {
   id: string;
   uid: number;
   gpu: number;
   used_memory: number;
-  sessions: Session.IModel;
+  sessions: Session.IModel[];
 }
 
 export interface IGPUStats {
@@ -141,6 +178,7 @@ export interface IGPUStats {
   mem_used: number;
   mem_unit: string;
   mem_util: number;
+  index: number;
 }
 
 export interface IGPUInfo {

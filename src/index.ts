@@ -10,17 +10,20 @@ import { IMainMenu } from '@jupyterlab/mainmenu';
 
 import { ILauncher } from '@jupyterlab/launcher';
 
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
+
 import { kernelIcon } from '@jupyterlab/ui-components';
 
 import { GPUWidget } from './gpuwidget';
-//import { GPUKernelManager } from './jupyterlab-gpuman';
+
 import { GPUManager } from './jupyterlab-gpuman';
 
 function activate(
   app: JupyterFrontEnd,
   mainMenu: IMainMenu,
   launcher: ILauncher,
-  restorer: ILayoutRestorer
+  restorer: ILayoutRestorer,
+  settingRegistry: ISettingRegistry
 ) {
   console.log('JupyterLab extension jupyterlab-gpuman is activated!');
 
@@ -78,6 +81,18 @@ function activate(
     command,
     name: () => 'gpuman'
   });
+
+  const updateSettings = (settings: ISettingRegistry.ISettings): void => {
+    gman.updateSettings(settings);
+  };
+
+  void Promise.all([
+    settingRegistry.load('jupyterlab-gpuman:plugin'),
+    app.restored
+  ]).then(([settings]) => {
+    updateSettings(settings);
+    settings.changed.connect(updateSettings);
+  });
 }
 
 /**
@@ -86,7 +101,7 @@ function activate(
 const extension: JupyterFrontEndPlugin<void> = {
   id: 'jupyterlab-gpuman',
   autoStart: true,
-  requires: [IMainMenu, ILauncher, ILayoutRestorer],
+  requires: [IMainMenu, ILauncher, ILayoutRestorer, ISettingRegistry],
   activate: activate
 };
 

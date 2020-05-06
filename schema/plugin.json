@@ -1,0 +1,33 @@
+{
+  "jupyter.lab.setting-icon": "ui-components:kernel-icon",
+  "jupyter.lab.setting-icon-label": "gpuman",
+  "title": "gpuman",
+  "description": "gpuman settings.",
+  "definitions": {
+    "hiddenGPUs": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
+    "pollingInterval": {
+      "type": "number"
+    }
+  },
+  "properties": {
+    "hiddenGPUs": {
+      "title": "Hidden GPUs",
+      "description": "A list of integers indicating GPUs to be hidden from GPUMan display.",
+      "$ref": "#/definitions/hiddenGPUs",
+      "default": []
+    },
+    "pollingInterval": {
+      "title": "Polling Interval",
+      "description": "The interval (in milliseconds) at which to poll for GPU statistics.",
+      "$ref": "#/definitions/pollingInterval",
+      "default": 5000
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}

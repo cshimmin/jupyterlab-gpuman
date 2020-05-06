@@ -68,6 +68,7 @@ class GPUKernels(APIHandler):
                     'mem_unit': stats['fb_memory_usage']['unit'],
                     'mem_util': stats['utilization']['memory_util'],
                     'gpu_util': stats['utilization']['gpu_util'],
+                    'index': gid,
                     }
         self.finish(json.dumps(result))
 
